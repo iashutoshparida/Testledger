@@ -47,6 +47,17 @@ def test_error_counts_as_failure_and_skips_are_ignored():
     assert v.runs == 6 and v.failures == 3 and v.flips == 5
 
 
+def test_short_history_regression_is_not_flaky():
+    # 1 flip in 3 transitions = 0.33 > threshold, but one flip is one code change.
+    v = verdict([P, P, F, F], min_runs=4, threshold=0.3)
+    assert v.score > 0.3 and not v.is_flaky
+
+
+def test_fixed_test_is_stable():
+    v = verdict([F] * 5 + [P] * 5)
+    assert not v.is_flaky and v.reason == "stable"
+
+
 def test_needs_minimum_runs():
     v = verdict([P, F, P], min_runs=5)
     assert not v.is_flaky and "need 5" in v.reason
@@ -91,8 +102,7 @@ def test_single_step_change_never_flags_without_reruns(passes, fails):
     seq = [P] * passes + [F] * fails
     v = verdict(seq, min_runs=5, threshold=0.3)
     assert v.flips <= 1
-    if v.runs - 1 > 1 / 0.3:
-        assert not v.is_flaky
+    assert not v.is_flaky
 
 
 @given(st.lists(st.sampled_from([P, F]), min_size=2, max_size=30))

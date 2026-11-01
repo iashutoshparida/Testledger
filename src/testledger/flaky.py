@@ -8,7 +8,9 @@ A test is flaky when its outcome changes without the code changing. Two signals,
   A real regression flips once and then stays failing, so its flip rate is ~1/(n-1).
   A test that fails at random with probability p flips at an expected rate of 2p(1-p).
 
-score = max(mixed-commit ratio, flip rate), in [0, 1]. Skipped runs carry no signal and are ignored.
+score = max(mixed-commit ratio, flip rate), in [0, 1]. A test is flagged when it has enough runs and
+either a mixed commit, or at least two flips with score >= threshold. Exactly one flip is never
+flagged: one change in behaviour is explained by one code change. Skipped runs are ignored.
 """
 
 from __future__ import annotations
@@ -70,11 +72,16 @@ def score_history(
     elif mixed:
         is_flaky = True
         reason = f"passed and failed on the same commit ({mixed} commit(s))"
+    elif flips <= 1:
+        # One switch is fully explained by one code change (a regression or a fix),
+        # however short the history is. Flakiness needs the outcome to come back.
+        if failures and failed[-1]:
+            is_flaky, reason = False, "consistent failure since one change: likely a regression"
+        else:
+            is_flaky, reason = False, "stable"
     elif score >= threshold:
         is_flaky = True
         reason = f"outcome flipped in {flips} of {runs - 1} consecutive runs"
-    elif failures and failed[-1] and flips <= 1:
-        is_flaky, reason = False, "consistent failure since one change: likely a regression"
     else:
         is_flaky, reason = False, "stable"
     return Verdict(

@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     flaky_min_runs: int = Field(default=5, ge=2)
     flaky_threshold: float = Field(default=0.30, gt=0.0, le=1.0)
     release_after_passes: int = Field(default=10, ge=1)
+    history_window: int = Field(default=50, ge=2, le=1000)
 
     @field_validator("log_level")
     @classmethod

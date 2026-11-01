@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ledger
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ledger
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ledger"]
+      interval: 5s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      TESTLEDGER_DATABASE_URL: postgresql+psycopg://ledger:${POSTGRES_PASSWORD}@db:5432/ledger
+      TESTLEDGER_API_KEY_HASHES: ${TESTLEDGER_API_KEY_HASHES:?set TESTLEDGER_API_KEY_HASHES in .env}
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:

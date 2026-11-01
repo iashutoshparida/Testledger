@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+  <testsuite name="pytest" tests="3" failures="1" skipped="1">
+    <testcase classname="tests.test_cart" name="test_add_item" time="0.004"/>
+    <testcase classname="tests.test_checkout" name="test_payment_timeout" time="1.203">
+      <failure message="TimeoutError: gateway did not answer in 1s">...</failure>
+    </testcase>
+    <testcase classname="tests.test_search" name="test_reindex" time="0.000">
+      <skipped message="needs elasticsearch"/>
+    </testcase>
+  </testsuite>
+</testsuites>

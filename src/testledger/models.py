@@ -18,6 +18,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -104,8 +105,8 @@ class Quarantine(Base):
             "uq_quarantines_active",
             "test_case_id",
             unique=True,
-            sqlite_where="released_at IS NULL",
-            postgresql_where="released_at IS NULL",
+            sqlite_where=text("released_at IS NULL"),
+            postgresql_where=text("released_at IS NULL"),
         ),
     )
 

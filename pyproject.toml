@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "testledger"
+version = "0.1.0"
+description = "CI test-result ledger with flaky-test detection and quarantine"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Ashutosh Parida" }]
+dependencies = [
+  "fastapi>=0.115,<0.116",
+  "uvicorn>=0.32,<0.33",
+  "sqlalchemy>=2.0.36,<2.1",
+  "alembic>=1.14,<1.15",
+  "pydantic>=2.10,<2.11",
+  "pydantic-settings>=2.6,<2.7",
+  "defusedxml>=0.7.1,<0.8",
+  "httpx>=0.28,<0.29",
+]
+
+[project.optional-dependencies]
+postgres = ["psycopg[binary]>=3.2,<3.3"]
+dev = [
+  "pytest>=8.3,<8.4",
+  "pytest-cov>=6.0,<6.1",
+  "hypothesis>=6.122,<6.123",
+  "ruff>=0.8,<0.9",
+  "mypy>=1.13,<1.14",
+]
+
+[project.scripts]
+testledger = "testledger.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = ["postgres: needs a PostgreSQL URL in TESTLEDGER_TEST_PG_URL"]
+filterwarnings = ["error", "ignore::DeprecationWarning:starlette.*"]
+
+[tool.coverage.run]
+source = ["testledger"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
+ignore = ["S101"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "B"]
+"alembic/**" = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["testledger"]
+plugins = ["pydantic.mypy"]

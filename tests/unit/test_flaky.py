@@ -109,5 +109,5 @@ def test_single_step_change_never_flags_without_reruns(passes, fails):
 def test_rerun_with_both_outcomes_always_flags(seq):
     if P not in seq or F not in seq:
         return
-    v = verdict(seq + [P, F], [f"c{i}" for i in range(len(seq))] + ["x", "x"], min_runs=2)
+    v = verdict([*seq, P, F], [*(f"c{i}" for i in range(len(seq))), "x", "x"], min_runs=2)
     assert v.is_flaky

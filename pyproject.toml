@@ -63,8 +63,16 @@ ignore = ["S101"]
 "tests/**" = ["S", "B"]
 "alembic/**" = ["E501"]
 
+[tool.ruff.lint.isort]
+known-third-party = ["alembic"]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true
-packages = ["testledger"]
+files = ["src/testledger"]
+mypy_path = "src"
 plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["defusedxml", "defusedxml.*"]
+ignore_missing_imports = true

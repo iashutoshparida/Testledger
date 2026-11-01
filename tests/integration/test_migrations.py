@@ -23,7 +23,9 @@ def test_downgrade_removes_every_table(engine):
 
 
 def _seed(conn):
-    conn.execute(text("INSERT INTO projects (id, name, created_at) VALUES (1, 'p', CURRENT_TIMESTAMP)"))
+    conn.execute(
+        text("INSERT INTO projects (id, name, created_at) VALUES (1, 'p', CURRENT_TIMESTAMP)")
+    )
     conn.execute(
         text(
             "INSERT INTO runs (id, project_id, external_id, commit_sha, branch, content_sha256,"

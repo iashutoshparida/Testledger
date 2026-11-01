@@ -134,8 +134,13 @@ class LedgerService:
 
         log.info(
             "run ingested",
-            extra={"run_id": run.id, "project": project, "tests": len(results),
-                   "failures": failures, "quarantined": len(quarantined)},
+            extra={
+                "run_id": run.id,
+                "project": project,
+                "tests": len(results),
+                "failures": failures,
+                "quarantined": len(quarantined),
+            },
         )
         return IngestResult(run.id, True, len(results), failures, quarantined, released)
 
@@ -153,7 +158,9 @@ class LedgerService:
             assert proj is not None
             return proj
 
-    def _ensure_test_cases(self, session: Session, project_id: int, names: list[str]) -> dict[str, int]:
+    def _ensure_test_cases(
+        self, session: Session, project_id: int, names: list[str]
+    ) -> dict[str, int]:
         ids: dict[str, int] = {}
         for chunk in _chunks(names):
             rows = session.execute(
@@ -217,7 +224,9 @@ class LedgerService:
                 continue
             verdict = score_history(history, min_runs=s.flaky_min_runs, threshold=s.flaky_threshold)
             if verdict.is_flaky:
-                session.add(Quarantine(test_case_id=tc_id, score=verdict.score, reason=verdict.reason))
+                session.add(
+                    Quarantine(test_case_id=tc_id, score=verdict.score, reason=verdict.reason)
+                )
                 quarantined.append(name_of[tc_id])
         return quarantined, released
 
@@ -233,7 +242,9 @@ class LedgerService:
                 active[q.test_case_id] = q
         return active
 
-    def _histories(self, session: Session, test_case_ids: list[int]) -> dict[int, list[Observation]]:
+    def _histories(
+        self, session: Session, test_case_ids: list[int]
+    ) -> dict[int, list[Observation]]:
         """Last `history_window` results per test, oldest first. Run ids are monotonic,
         so they give a stable chronological order even when timestamps collide."""
         window = self._settings.history_window
@@ -286,8 +297,9 @@ class LedgerService:
                 query = query.where(Run.id < before_id)
             runs = session.scalars(query.order_by(Run.id.desc()).limit(limit))
             return [
-                RunSummary(r.id, r.external_id, r.commit_sha, r.branch, r.total, r.failures,
-                           r.created_at)
+                RunSummary(
+                    r.id, r.external_id, r.commit_sha, r.branch, r.total, r.failures, r.created_at
+                )
                 for r in runs
             ]
 
@@ -303,32 +315,45 @@ class LedgerService:
                 .where(Result.run_id == run.id, Result.outcome.in_(_FAILURE_OUTCOMES))
                 .order_by(TestCase.test_id)
             )
-            summary = RunSummary(run.id, run.external_id, run.commit_sha, run.branch, run.total,
-                                 run.failures, run.created_at)
+            summary = RunSummary(
+                run.id,
+                run.external_id,
+                run.commit_sha,
+                run.branch,
+                run.total,
+                run.failures,
+                run.created_at,
+            )
             return summary, [FailureEntry(*row) for row in rows]
 
     def flaky_report(self, project: str) -> list[TestVerdict]:
         s = self._settings
         with transaction(self._sessions) as session:
             proj = self._project(session, project)
-            failing = list(session.scalars(
-                select(Result.test_case_id)
-                .join(TestCase, TestCase.id == Result.test_case_id)
-                .where(TestCase.project_id == proj.id, Result.outcome.in_(_FAILURE_OUTCOMES))
-                .distinct()
-            ))
+            failing = list(
+                session.scalars(
+                    select(Result.test_case_id)
+                    .join(TestCase, TestCase.id == Result.test_case_id)
+                    .where(TestCase.project_id == proj.id, Result.outcome.in_(_FAILURE_OUTCOMES))
+                    .distinct()
+                )
+            )
             if not failing:
                 return []
-            names = dict(session.execute(
-                select(TestCase.id, TestCase.test_id).where(TestCase.id.in_(failing))
-            ).all())
+            names: dict[int, str] = {
+                tc_id: name
+                for tc_id, name in session.execute(
+                    select(TestCase.id, TestCase.test_id).where(TestCase.id.in_(failing))
+                )
+            }
             active = self._active_quarantines(session, failing)
             histories = self._histories(session, sorted(failing))
             report = [
                 TestVerdict(
                     names[tc_id],
-                    score_history(histories[tc_id], min_runs=s.flaky_min_runs,
-                                  threshold=s.flaky_threshold),
+                    score_history(
+                        histories[tc_id], min_runs=s.flaky_min_runs, threshold=s.flaky_threshold
+                    ),
                     tc_id in active,
                 )
                 for tc_id in failing
@@ -340,8 +365,14 @@ class LedgerService:
             proj = self._project(session, project)
             tc = self._test_case(session, proj.id, test_id)
             rows = session.execute(
-                select(Run.id, Run.commit_sha, Run.branch, Result.outcome, Result.duration_ms,
-                       Result.message)
+                select(
+                    Run.id,
+                    Run.commit_sha,
+                    Run.branch,
+                    Result.outcome,
+                    Result.duration_ms,
+                    Result.message,
+                )
                 .join(Run, Run.id == Result.run_id)
                 .where(Result.test_case_id == tc.id)
                 .order_by(Run.id.desc())

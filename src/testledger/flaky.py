@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from itertools import pairwise
 
 from testledger.junit import Outcome
 
@@ -42,9 +43,7 @@ class Verdict:
     reason: str
 
 
-def score_history(
-    history: Sequence[Observation], *, min_runs: int, threshold: float
-) -> Verdict:
+def score_history(history: Sequence[Observation], *, min_runs: int, threshold: float) -> Verdict:
     if min_runs < 2:
         raise ValueError("min_runs must be at least 2")
     if not 0.0 < threshold <= 1.0:
@@ -54,7 +53,7 @@ def score_history(
     commits = [obs.commit_sha for obs in history if obs.outcome is not Outcome.SKIPPED]
     runs = len(failed)
     failures = sum(failed)
-    flips = sum(1 for prev, cur in zip(failed, failed[1:], strict=False) if prev != cur)
+    flips = sum(1 for prev, cur in pairwise(failed) if prev != cur)
     flip_rate = flips / (runs - 1) if runs > 1 else 0.0
 
     by_commit: dict[str, set[bool]] = {}

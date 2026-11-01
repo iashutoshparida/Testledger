@@ -11,16 +11,25 @@ def report(**outcomes: str) -> bytes:
     """report(a="pass", b="fail") -> JUnit XML bytes."""
     cases = []
     for name, outcome in outcomes.items():
-        body = {"pass": "", "fail": '<failure message="boom"/>', "error": "<error/>",
-                "skip": "<skipped/>"}[outcome]
+        body = {
+            "pass": "",
+            "fail": '<failure message="boom"/>',
+            "error": "<error/>",
+            "skip": "<skipped/>",
+        }[outcome]
         cases.append(f'<testcase classname="suite" name="{name}" time="0.01">{body}</testcase>')
     return f"<testsuite>{''.join(cases)}</testsuite>".encode()
 
 
 @pytest.fixture
 def settings():
-    return Settings(flaky_min_runs=4, flaky_threshold=0.3, release_after_passes=3,
-                    history_window=50, api_key_hashes="")
+    return Settings(
+        flaky_min_runs=4,
+        flaky_threshold=0.3,
+        release_after_passes=3,
+        history_window=50,
+        api_key_hashes="",
+    )
 
 
 @pytest.fixture
@@ -142,8 +151,10 @@ def test_history_is_newest_first_and_bounded(svc):
 
 
 def test_history_window_limits_what_the_scorer_sees(session_factory):
-    svc = LedgerService(session_factory, Settings(flaky_min_runs=4, flaky_threshold=0.3,
-                                                  history_window=4, api_key_hashes=""))
+    svc = LedgerService(
+        session_factory,
+        Settings(flaky_min_runs=4, flaky_threshold=0.3, history_window=4, api_key_hashes=""),
+    )
     outcomes = ["fail", "pass"] * 5 + ["pass"] * 4  # old flakiness, recent window all pass
     for n, o in enumerate(outcomes[:10]):
         ingest(svc, n, t=o)

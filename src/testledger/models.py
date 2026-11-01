@@ -59,9 +59,7 @@ class Run(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     project: Mapped[Project] = relationship(back_populates="runs")
-    results: Mapped[list[Result]] = relationship(
-        back_populates="run", cascade="all, delete-orphan"
-    )
+    results: Mapped[list[Result]] = relationship(back_populates="run", cascade="all, delete-orphan")
 
 
 class TestCase(Base):
